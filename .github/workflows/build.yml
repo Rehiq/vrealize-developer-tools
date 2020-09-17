@@ -97,3 +97,11 @@ jobs:
         with:
           name: vrealize-developer-tools-${{steps.version_step.outputs.version_build}}.vsix
           path: "*.vsix"
+
+      - name: vropkg install and build
+        run: |
+          cd /tools/vropkg
+          npm install
+          cd ../../
+        env:
+          CI: true
