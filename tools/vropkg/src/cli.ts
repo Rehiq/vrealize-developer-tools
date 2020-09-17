@@ -75,9 +75,7 @@ const cliOpts = [
 async function run() {
     const input = commandLineArgs(cliOpts, { stopAtFirstUnknown: false }) as CliInputs;
     if (!(input.verbose || input.vv)) {
-        /*eslint no-empty-function: ["error", { "allow": ["arrowFunctions"] }]*/
-        /*eslint-env es6*/
-        console.debug = () => {}
+        console.debug = () => {} // eslint-disable-line
     }
 
     let printHelp = false
