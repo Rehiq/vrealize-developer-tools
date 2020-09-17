@@ -2,7 +2,7 @@
  * Copyright 2018-2020 VMware, Inc.
  * SPDX-License-Identifier: MIT
  */
-import * as crypto from "crypto"
+import crypto from "crypto"
 
 import * as fs from "fs-extra"
 import * as nforge from "node-forge"
