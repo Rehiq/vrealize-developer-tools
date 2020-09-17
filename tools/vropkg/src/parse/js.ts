@@ -1,17 +1,19 @@
-import * as Path            from "path";
-import * as FileSystem      from "fs-extra";
-import {XmlDocument}        from "xmldoc";
-import {VroPackageMetadata, VroNativeElement, VroActionData, VroElementType, VroNativeElementAttributes, VroScriptBundle} from "../types";
-import {Lang, VroScriptRuntime} from "../types";
-import {getCommentFromJavadoc, getScriptRuntime} from "./util";
-import {decode}           from "../encoding";
+/*!
+ * Copyright 2018-2020 VMware, Inc.
+ * SPDX-License-Identifier: MIT
+ */
+import * as Path from "path";
+
+import * as FileSystem from "fs-extra";
+import {XmlDocument} from "xmldoc";
 import * as AbstractSyntaxTree from "abstract-syntax-tree";
 import * as Comments from "parse-comments";
-
 import * as winston from 'winston';
 import * as glob from "glob";
-import { fstat } from "fs";
-import { isDirectory } from "../util";
+
+import { VroActionData, VroElementType, VroNativeElement, VroNativeElementAttributes, VroPackageMetadata,VroScriptBundle } from "../types";
+import {getCommentFromJavadoc, getScriptRuntime} from "./util";
+import {decode} from "../encoding";
 
 export class VroJsProjParser {
 
@@ -20,54 +22,54 @@ export class VroJsProjParser {
         this.lazy = lazy;
     }
 
-    public async parse(vrojsFolderPath: string): Promise<VroPackageMetadata> {
+    async parse(vrojsFolderPath: string): Promise<VroPackageMetadata> {
         winston.loggers.get("vrbt").info(`Parsing vro javascript project folder path ${vrojsFolderPath}`);
 
-        let elements: Array<VroNativeElement> = [];
+        const elements: VroNativeElement[] = [];
 
         // let parser = new VroNativeFolderElementParser();
         const JS_EXTENSION = ".js";
-        let baseDir = Path.join(vrojsFolderPath, "src", "main", "resources");
-        glob.sync(Path.join(baseDir, "**", "*" + JS_EXTENSION)).forEach(jsfile => {
-            var content = FileSystem.readFileSync(jsfile);
-            let vroPath = jsfile.substring(baseDir.length + 1);
-            let moduleIndex = vroPath.lastIndexOf("/");
-            let moduleName  = vroPath.substring(0, moduleIndex).replace(/\//g, ".");
-            let name   = vroPath.substring(moduleIndex + 1, vroPath.length - JS_EXTENSION.length);
-            let source = content.toString();
-            let javadoc       : any           = VroJsProjParser.getFirstCommentInSource(source, jsfile);
-            let description   : string        = VroJsProjParser.getDescriptionFromJavascriptDoc(javadoc);
-            let tags          : Array<string> = VroJsProjParser.getTagsFromJavascriptDoc(javadoc);
-            let returns       : any           = VroJsProjParser.getReturnStatementFromJavascriptDoc(javadoc);
-            let id            : string        = VroJsProjParser.getTagFromJavascriptDoc(javadoc, ["id", "Id", "ID"], "");
-            let version       : string        = VroJsProjParser.getTagFromJavascriptDoc(javadoc, ["version", "Version"], "1.0.0");
-            let runtime       : string        = VroJsProjParser.getTagFromJavascriptDoc(javadoc, ["runtime"], "javascript:ECMA5");
-            let bundle        : string        = VroJsProjParser.getTagFromJavascriptDoc(javadoc, ["bundle"], null);
-            let entryHandler  : string        = VroJsProjParser.getTagFromJavascriptDoc(javadoc, ["entryhandler", "EntryHandler", "Entryhandler"], null);
-            let paramsFromDoc : Array<any>    = VroJsProjParser.getParamsFromJavascriptDoc(javadoc);
-            let sourceTree    : any           = VroJsProjParser.getSourceTreeFromSource(source, jsfile);
-            let paramsFromSrc : Array<any>    = VroJsProjParser.getParamsFromSource(sourceTree);
+        const baseDir = Path.join(vrojsFolderPath, "src", "main", "resources");
+        glob.sync(Path.join(baseDir, "**", `*${ JS_EXTENSION}`)).forEach(jsfile => {
+            const content = FileSystem.readFileSync(jsfile);
+            const vroPath = jsfile.substring(baseDir.length + 1);
+            const moduleIndex = vroPath.lastIndexOf("/");
+            const moduleName = vroPath.substring(0, moduleIndex).replace(/\//g, ".");
+            const name = vroPath.substring(moduleIndex + 1, vroPath.length - JS_EXTENSION.length);
+            const source = content.toString();
+            const javadoc : any = VroJsProjParser.getFirstCommentInSource(source, jsfile);
+            const description : string = VroJsProjParser.getDescriptionFromJavascriptDoc(javadoc);
+            const tags : string[] = VroJsProjParser.getTagsFromJavascriptDoc(javadoc);
+            const returns : any = VroJsProjParser.getReturnStatementFromJavascriptDoc(javadoc);
+            const id : string = VroJsProjParser.getTagFromJavascriptDoc(javadoc, ["id", "Id", "ID"], "");
+            const version : string = VroJsProjParser.getTagFromJavascriptDoc(javadoc, ["version", "Version"], "1.0.0");
+            const runtime : string = VroJsProjParser.getTagFromJavascriptDoc(javadoc, ["runtime"], "javascript:ECMA5");
+            const bundle : string = VroJsProjParser.getTagFromJavascriptDoc(javadoc, ["bundle"], null);
+            const entryHandler : string = VroJsProjParser.getTagFromJavascriptDoc(javadoc, ["entryhandler", "EntryHandler", "Entryhandler"], null);
+            const paramsFromDoc : any[] = VroJsProjParser.getParamsFromJavascriptDoc(javadoc);
+            const sourceTree : any = VroJsProjParser.getSourceTreeFromSource(source, jsfile);
+            const paramsFromSrc : any[] = VroJsProjParser.getParamsFromSource(sourceTree);
 
-            let params : Array<any> = new Array<any>();
+            const params : any[] = new Array<any>();
             VroJsProjParser.mergeSetWithUniqueNameKey(params, paramsFromDoc);
             VroJsProjParser.mergeSetWithUniqueNameKey(params, paramsFromSrc);
 
-            let metadata : VroNativeElementAttributes = {
+            const metadata : VroNativeElementAttributes = {
                 id: "",
                 name: name,
                 mimetype: "text/javascript",
                 description: description
             };
 
-            let startLine  = sourceTree.expression?.body?.loc?.start?.line;     // 1 - based
-            let startIndex = sourceTree.expression?.body?.loc?.start?.column;   // 0 - based
-            let endLine    = sourceTree.expression?.body?.loc?.end?.line;
-            let endIndex   = sourceTree.expression?.body?.loc?.end?.column;
+            let startLine = sourceTree.expression?.body?.loc?.start?.line; // 1 - based
+            const startIndex = sourceTree.expression?.body?.loc?.start?.column; // 0 - based
+            let endLine = sourceTree.expression?.body?.loc?.end?.line;
+            const endIndex = sourceTree.expression?.body?.loc?.end?.column;
 
             startLine = startLine ? startLine -1 : 0;
-            endLine   = endLine   ? endLine   -1 : 0;
+            endLine = endLine ? endLine -1 : 0;
 
-            let element : VroNativeElement =
+            const element : VroNativeElement =
                 {
                         categoryPath: moduleName.split(/\./),
                         type:         VroElementType.ScriptModule,
@@ -92,13 +94,13 @@ export class VroJsProjParser {
                                 sourceEndLine:    endLine,
                                 sourceEndIndex:   endIndex,
                                 getActionSource: function (action : VroActionData):string {
-                                    let jsFile = action.inline.sourceFile;
-                                    let startLine = action.inline.sourceStartLine;
-                                    let startIndex = action.inline.sourceStartIndex;
-                                    let endLine = action.inline.sourceEndLine;
-                                    let endIndex = action.inline.sourceEndIndex;
-                                    let fileContent = FileSystem.readFileSync(jsFile)?.toString();
-                                    let actionSource = VroJsProjParser.getActionBodyFromSourceIndexes(fileContent, startLine, startIndex, endLine, endIndex);
+                                    const jsFile = action.inline.sourceFile;
+                                    const startLine = action.inline.sourceStartLine;
+                                    const startIndex = action.inline.sourceStartIndex;
+                                    const endLine = action.inline.sourceEndLine;
+                                    const endIndex = action.inline.sourceEndIndex;
+                                    const fileContent = FileSystem.readFileSync(jsFile)?.toString();
+                                    const actionSource = VroJsProjParser.getActionBodyFromSourceIndexes(fileContent, startLine, startIndex, endLine, endIndex);
                                     return actionSource;
                                 },
                                 javadoc: javadoc?.value
@@ -109,15 +111,15 @@ export class VroJsProjParser {
              elements.push(element);
         }, this);
 
-        let projectInfo = FileSystem.readFileSync(Path.join(vrojsFolderPath, "pom.xml"));
-        let pomXml = new XmlDocument(decode(projectInfo));
-        return <VroPackageMetadata>{
-            groupId:    pomXml.descendantWithPath("groupId")   .val,
+        const projectInfo = FileSystem.readFileSync(Path.join(vrojsFolderPath, "pom.xml"));
+        const pomXml = new XmlDocument(decode(projectInfo));
+        return {
+            groupId:    pomXml.descendantWithPath("groupId") .val,
             artifactId: pomXml.descendantWithPath("artifactId").val,
-            version:    pomXml.descendantWithPath("version")   .val,
+            version:    pomXml.descendantWithPath("version") .val,
             packaging:  pomXml.descendantWithPath("packaging") .val,
             elements:   elements,
-        }
+        } as VroPackageMetadata;
     }
 
     private static getFirstCommentInSource(source:string, jsFile : string) : any {
@@ -135,9 +137,9 @@ export class VroJsProjParser {
             }
         });
         comments.parse(source.toString());
-        let comment : Array<any> = comments.ast ? comments.ast : [];
+        const comment : any[] = comments.ast ? comments.ast : [];
         comment.filter(a=>!a.code?.context?.size).sort((a, b) => a.loc?.start?.line - b.loc?.start?.line);
-        let details : any = comment.length ? comment[0] : {};
+        const details : any = comment.length ? comment[0] : {};
         return details;
     }
 
@@ -145,14 +147,14 @@ export class VroJsProjParser {
         return details.description ? details.description : "";
     }
 
-    private static getParamsFromJavascriptDoc(details:any) : Array<any> {
-        var params = new Array<any>();
-        let annotations : Array<any> = details.tags as Array<any>;
+    private static getParamsFromJavascriptDoc(details:any) : any[] {
+        const params = new Array<any>();
+        const annotations : any[] = details.tags as any[];
         if (annotations == null) {
             return [];
         }
         annotations.filter(a => a.title == "param").forEach(annotation => {
-            let param = {
+            const param = {
                 name: annotation.name,
                 type: VroJsProjParser.parseType(annotation.type),
                 description: annotation.description
@@ -165,35 +167,35 @@ export class VroJsProjParser {
     }
 
     private static getReturnStatementFromJavascriptDoc(details:any) : any {
-        let deflt = { type: "any", description: ""};
-        let annotations : Array<any> = details.tags as Array<any>;
+        const deflt = { type: "any", description: ""};
+        const annotations : any[] = details.tags as any[];
         if (annotations == null) {
             return deflt;
         }
-        let returns : any  = annotations.find(a=>a.title == "return" || a.title == "returns");
+        const returns : any = annotations.find(a=>a.title == "return" || a.title == "returns");
         if (returns) {
-           return  {
+           return {
                type: VroJsProjParser.parseType(returns.type),
                description: returns.description
            };
-        } else {
-           return deflt;
         }
+           return deflt;
+
     }
 
-    private static getTagFromJavascriptDoc(details:any, possibleTags:Array<string>, deflt : string) : string {
-        let annotations : Array<any> = details.tags as Array<any>;
+    private static getTagFromJavascriptDoc(details:any, possibleTags:string[], deflt : string) : string {
+        const annotations : any[] = details.tags as any[];
         if (annotations == null) {
             return deflt;
         }
-        let valueAnnotation : any  = annotations.find(a=>possibleTags.includes(a.title));
+        const valueAnnotation : any = annotations.find(a=>possibleTags.includes(a.title));
         let value : string = valueAnnotation?.description;
         value = !!value ? value : deflt;
         return value;
     }
 
-    private static getTagsFromJavascriptDoc(details:any) : Array<string> {
-        let annotations : Array<any> = details.tags as Array<any>;
+    private static getTagsFromJavascriptDoc(details:any) : string[] {
+        const annotations : any[] = details.tags as any[];
         if (annotations == null) {
             return [];
         }
@@ -213,11 +215,11 @@ export class VroJsProjParser {
         return tree.body[0];
     }
 
-    private static getParamsFromSource(tree:any) : Array<any> {
-        var params : Array<any> = new Array<any>();
-        let paramElements : Array<any> = tree.expression.params ? tree.expression.params as Array<any> : [];
+    private static getParamsFromSource(tree:any) : any[] {
+        const params : any[] = new Array<any>();
+        const paramElements : any[] = tree.expression.params ? tree.expression.params as any[] : [];
         paramElements.forEach(element => {
-            let param = {
+            const param = {
                 name: element.name,
                 type: "any",
                 description: ""
@@ -230,27 +232,27 @@ export class VroJsProjParser {
     }
 
     private static getActionBodyFromSource(tree: any, source : string, jsFile : string) : string {
-        let startLine  = tree.expression?.body?.loc?.start?.line;     // 1 - based
-        let startIndex = tree.expression?.body?.loc?.start?.column;   // 0 - based
-        let endLine    = tree.expression?.body?.loc?.end?.line;
-        let endIndex   = tree.expression?.body?.loc?.end?.column;
+        let startLine = tree.expression?.body?.loc?.start?.line; // 1 - based
+        const startIndex = tree.expression?.body?.loc?.start?.column; // 0 - based
+        let endLine = tree.expression?.body?.loc?.end?.line;
+        const endIndex = tree.expression?.body?.loc?.end?.column;
 
         startLine = startLine ? startLine -1 : 0;
-        endLine   = endLine   ? endLine   -1 : 0;
+        endLine = endLine ? endLine -1 : 0;
         return this.getActionBodyFromSourceIndexes(source, startLine, startIndex, endLine, endIndex);
     }
 
     private static getActionBodyFromSourceIndexes(source : string, startLine : number, startIndex : number, endLine : number, endIndex : number) : string {
-        let filtered : Array<string> = [];
+        let filtered : string[] = [];
         let lines = source.split("\n");
-        let len = lines.length;
+        const len = lines.length;
         let maxIdent : number = Number.MAX_VALUE;
         for (let index = 0; index < len; index++) {
-            let line = lines.shift();
+            const line = lines.shift();
             if (index < startLine || index > endLine) {
                 continue;
             }
-            let tabequivalent = "    ";
+            const tabequivalent = "    ";
             let filteredLine : string;
             if (index != startLine && index != endLine) {
                 filteredLine = line;
@@ -267,7 +269,7 @@ export class VroJsProjParser {
             }
             filteredLine = filteredLine.replace("\t", tabequivalent);
             if (maxIdent > 0 && !!filteredLine && filteredLine.length > 0) {
-                let index = filteredLine.search(/\S/);
+                const index = filteredLine.search(/\S/);
                 if (index != -1 && index < maxIdent) {
                     maxIdent = index;
                 }
@@ -275,17 +277,17 @@ export class VroJsProjParser {
             filtered.push(filteredLine);
         }
         lines = filtered; filtered = null;
-        let actionSource = lines.map( (line, index) => {
+        const actionSource = lines.map( (line, index) => {
             if (!!line && line.length > maxIdent) {
                 return line.substring(maxIdent);
-            } else {
-                return line.search(/\S/) == -1 ? "" : line;
             }
+                return line.search(/\S/) == -1 ? "" : line;
+
         }).join("\n");
         return actionSource;
     }
 
-    private static mergeSetWithUniqueNameKey(destination : Array<any>, extra : Array<any>) : Array<any> {
+    private static mergeSetWithUniqueNameKey(destination : any[], extra : any[]) : any[] {
         if (!extra) {
             return destination;
         }
@@ -298,10 +300,10 @@ export class VroJsProjParser {
     }
 
     private static parseType(type:any) : string {
-        const primitiveTypes : Array<string> = ["boolean", "number", "string", "any", "undefined", "null", "object"];
+        const primitiveTypes : string[] = ["boolean", "number", "string", "any", "undefined", "null", "object"];
         if (type?.type == "NameExpression") {
-            let typeName:string = type.name ? type.name : "" + JSON.stringify(type);
-            for (let index in primitiveTypes) {
+            const typeName:string = type.name ? type.name : `${ JSON.stringify(type)}`;
+            for (const index in primitiveTypes) {
                 if (typeName.toLowerCase() == primitiveTypes[index]) {
                     return primitiveTypes[index];
                 }
@@ -321,7 +323,7 @@ export class VroJsProjParser {
         if (entryhandler == null) {
             throw new Error(`Need to specify an entryhandler for a bundle ("${bundle}"). Please use @entryhandler tag to specify entrypoint inside the bundle.`);
         }
-        let absolutePath = Path.isAbsolute(bundle) ? bundle : Path.resolve(vrojsFolderPath, bundle)
+        const absolutePath = Path.isAbsolute(bundle) ? bundle : Path.resolve(vrojsFolderPath, bundle)
         return { contentPath: absolutePath, projectPath: bundle, entry: entryhandler};
     }
 }

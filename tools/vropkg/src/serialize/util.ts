@@ -1,10 +1,16 @@
-import * as fs from "fs-extra";
+/*!
+ * Copyright 2018-2020 VMware, Inc.
+ * SPDX-License-Identifier: MIT
+ */
 import * as path from "path";
-import * as archiver from 'archiver';
-import * as t from "../types";
+
+import * as fs from "fs-extra";
+import archiver from 'archiver';
 import * as winston from 'winston';
 import * as xmlbuilder from "xmlbuilder";
 import * as CRC from "crc-32";
+
+import * as t from "../types";
 
 export const saveOptions = {
     pretty: true
@@ -43,8 +49,8 @@ export const zipbundle = (target : string )=> {
     return (file : string )=> async (sourcePath : string, isDir: boolean): Promise<void> => {
         const absoluteZipPath = path.join(target, file);
         if (isDir) {
-            var output = fs.createWriteStream(absoluteZipPath);
-            var archive = archiver('zip', { zlib: { level: 9 } });
+            const output = fs.createWriteStream(absoluteZipPath);
+            const archive = archiver('zip', { zlib: { level: 9 } });
             archive.directory(sourcePath, false);
             archive.pipe(output);
             archive.finalize();
@@ -64,17 +70,17 @@ export const getActionXml = (id : string, name : string, description:string, act
     if (!actioncontent) {
         actioncontent = action.inline?.getActionSource(action);
     }
-    let elementInfoXml = xmlbuilder.create("dunes-script-module", xmlOptions);
-    let root = elementInfoXml;
+    const elementInfoXml = xmlbuilder.create("dunes-script-module", xmlOptions);
+    const root = elementInfoXml;
     root.att("name", name)
         .att("result-type", action.returnType.type)
         .att("api-version", "6.0.0")
         .att("id", id)
         .att("version", action.version || "1.0.0")
         .att("allowed-operations", "vef");
-    root.ele("description").cdata(description);  // Check if that is correct to be put here.
+    root.ele("description").cdata(description); // Check if that is correct to be put here.
     if (action?.runtime?.lang != null && action?.runtime?.lang != t.Lang.javascript) {
-        root.ele("runtime").cdata(t.Lang[action.runtime.lang] + ":" + action.runtime.version);
+        root.ele("runtime").cdata(`${t.Lang[action.runtime.lang] }:${ action.runtime.version}`);
     }
     if (action?.bundle != null) {
         root.ele("entry-point").cdata(action.bundle.entry);
@@ -92,7 +98,7 @@ export const complexActionComment = (element: t.VroNativeElement) => {
     if (element?.type != t.VroElementType.ScriptModule) {
         return element?.comment;
     }
-    let obj : any = {
+    const obj : any = {
         comment: element?.comment,
         returnType:  element.action.returnType,
         javadoc: element.action?.inline?.javadoc,

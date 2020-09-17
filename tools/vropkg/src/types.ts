@@ -1,3 +1,7 @@
+/*!
+ * Copyright 2018-2020 VMware, Inc.
+ * SPDX-License-Identifier: MIT
+ */
 export enum ProjectType {
 	tree,
     flat,
@@ -63,14 +67,14 @@ export class VroActionParameter {
 }
 
 export class VroScriptRuntime {
-    lang: Lang      // javascript, node, powercli (Powershell) or python
+    lang: Lang // javascript, node, powercli (Powershell) or python
     version: string // Supported "" for javascript (ECMA5), "12" for node, "11-powershell-6.2" for powercli and "3.7" for python
 }
 
 export class VroScriptBundle {
-    contentPath: string     // Path on the file system to the dir or zip file containing the bundled script package.
+    contentPath: string // Path on the file system to the dir or zip file containing the bundled script package.
     projectPath: string
-    entry: string    // The main entry point inside the bundle package.
+    entry: string // The main entry point inside the bundle package.
 }
 
 export class VroScriptInline {
@@ -86,15 +90,15 @@ export class VroScriptInline {
 
 export class VroActionData {
     version: string
-    params: Array<VroActionParameter>
+    params: VroActionParameter[]
     returnType: VroActionParameter
     runtime: VroScriptRuntime
-    inline: VroScriptInline         // Inline Script. bundle will be null
-    bundle: VroScriptBundle         // Bundled Script. inline will be null
+    inline: VroScriptInline // Inline Script. bundle will be null
+    bundle: VroScriptBundle // Bundled Script. inline will be null
 }
 
 export interface VroNativeElement {
-    categoryPath: Array<string>
+    categoryPath: string[]
     type: VroElementType
     id: string
     name: string
@@ -102,7 +106,7 @@ export interface VroNativeElement {
     comment: string,
     attributes: VroNativeElementAttributes
     dataFilePath: string
-    tags: Array<string>
+    tags: string[]
     action: VroActionData
     form?: any
 }
@@ -125,5 +129,5 @@ export interface VroPackageMetadata {
     version: string
     packaging: string
     description: string
-    elements: Array<VroNativeElement>
+    elements: VroNativeElement[]
 }

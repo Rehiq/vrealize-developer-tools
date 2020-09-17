@@ -34,7 +34,6 @@
     "@types/gulp-jasmine": "^2.4.2",
     "@types/iconv": "^2.1.16",
     "@types/jasmine": "^3.3.9",
-    "@types/node": "^11.15.7",
     "@types/node-forge": "^0.8.7",
     "@types/npm": "^2.0.31",
     "@types/unzipper": "^0.8.1",

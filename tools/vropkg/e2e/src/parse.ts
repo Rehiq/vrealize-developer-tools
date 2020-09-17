@@ -1,15 +1,20 @@
+/*!
+ * Copyright 2018-2020 VMware, Inc.
+ * SPDX-License-Identifier: MIT
+ */
 import "jasmine";
-import * as fs from "fs-extra";
 import * as path from "path";
+import * as child_process from "child_process"; // eslint-disable-line
+
+import * as fs from "fs-extra";
 import * as glob from "glob";
-import * as child_process from "child_process";
 import * as unzipper from 'unzipper';
 
 
 describe("End-to-End Tests", () => {
     jasmine.DEFAULT_TIMEOUT_INTERVAL = 30000;
 
-    let childProcLogs = process.env.CHILD_PROC_LOGS == "true" || process.env.CHILD_PROC_LOGS == "1";
+    const childProcLogs = process.env.CHILD_PROC_LOGS == "true" || process.env.CHILD_PROC_LOGS == "1";
 
     const currentPath = process.cwd();
 
@@ -21,19 +26,19 @@ describe("End-to-End Tests", () => {
             );
         }
 
-        const childProcess = child_process.spawn("node", caseArguments, {
+        const childProcess = child_process.spawn("node", caseArguments, { // eslint-disable-line
             cwd: currentPath,
             env: process.env
         });
 
-        childProcess.stdout.on("data", function (data) {
+        childProcess.stdout.on("data", (data) => {
             if (childProcLogs) {
                 console.log(`${caseName} stdout: ${data}`);
             }
         });
 
         return new Promise<void>((resolve, reject) => {
-            childProcess.stderr.on("data", function (data) {
+            childProcess.stderr.on("data", (data) => {
                 const output = data.toString('utf-8');
                 if (childProcLogs) {
                     console.log(`${caseName} stderr: ${output}`);
@@ -43,7 +48,7 @@ describe("End-to-End Tests", () => {
                     reject(output)
                 }
             });
-            childProcess.on("close", function (code) {
+            childProcess.on("close", (code) => {
                 if (childProcLogs) {
                     console.log(`${caseName} exit code: ${code}`);
                 }
@@ -95,7 +100,7 @@ describe("End-to-End Tests", () => {
     }
 
     it("Convert XML project from tree to flat structure", async () => {
-        try {
+        try { // eslint-disable-line
             await unzipTree();
 
             await runCase("Project tree -> flat", [
@@ -117,7 +122,7 @@ describe("End-to-End Tests", () => {
     })
 
     it("Convert XML project from flat to tree structure", async () => {
-        try {
+        try { // eslint-disable-line
             await unzipTree();
             await runCase("Project flat -> tree", [
                 expand("bin", "vropkg"),

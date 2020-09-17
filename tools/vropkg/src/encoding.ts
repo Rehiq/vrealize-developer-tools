@@ -1,3 +1,7 @@
+/*!
+ * Copyright 2018-2020 VMware, Inc.
+ * SPDX-License-Identifier: MIT
+ */
 const Iconv = require('iconv').Iconv;
 
 export const decode = (buf: Buffer): string => {
@@ -9,10 +13,10 @@ export const decode = (buf: Buffer): string => {
     } else if (buf.length > 3 && buf[0] == 0xFF && buf[1] == 0xFE && buf[2] == 0x00 && buf[3] == 0x00) { // UTF-32 (LE)
         encoding = "UTF-32LE";
         strip = 4;
-    } else if (buf.length > 1 && buf[0] == 0xFE && buf[1] == 0xFF) {            // UTF-16 (BE)
+    } else if (buf.length > 1 && buf[0] == 0xFE && buf[1] == 0xFF) { // UTF-16 (BE)
         encoding = "UTF-16BE";
         strip = 2;
-    } else if (buf.length > 1 && buf[0] == 0xFF && buf[1] == 0xFE) {            // UTF-16 (LE)
+    } else if (buf.length > 1 && buf[0] == 0xFF && buf[1] == 0xFE) { // UTF-16 (LE)
         encoding = "UTF-16LE";
         strip = 2;
     } else if (buf.length > 2 && buf[0] == 0xEF && buf[1] == 0xBB && buf[2] == 0xBF) { // UTF-8
@@ -27,11 +31,11 @@ export const decode = (buf: Buffer): string => {
         strip = 5;
     } else {
         let str = "";
-        for (let i = 0; i < buf.length; i++) {
-            str += String.fromCharCode(buf[i]);
+        for (const item of buf) {
+            str += String.fromCharCode(item);
         }
         return str;
     }
-    let iconv = new Iconv(encoding, "UTF-8");
+    const iconv = new Iconv(encoding, "UTF-8");
     return iconv.convert(buf.slice(strip)).toString("UTF-8");
 }

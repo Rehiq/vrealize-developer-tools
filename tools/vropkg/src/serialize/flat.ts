@@ -1,14 +1,20 @@
+/*!
+ * Copyright 2018-2020 VMware, Inc.
+ * SPDX-License-Identifier: MIT
+ */
+import * as path from "path";
+
 import * as fs from "fs-extra";
 import * as glob from "glob";
-import * as path from "path";
 import * as winston from 'winston';
-import * as t from "../types";
 import * as xmlbuilder from "xmlbuilder";
-import * as uuidv5 from 'uuid/v5';
+import v5 from 'uuid/v5';
+
+import * as t from "../types";
 import * as s from "../security";
 import * as p from "../packaging"
 import { exist, isDirectory} from "../util";
-import {getPackageName, serialize, zipbundle, getActionXml, saveOptions, xmlOptions, infoOptions} from "./util"
+import {getActionXml, getPackageName, infoOptions, saveOptions, serialize, xmlOptions, zipbundle} from "./util"
 
 const
     DUNES_META_INF = "dunes-meta-inf",
@@ -18,7 +24,7 @@ const
     CONTENT_SIGNATURE = "content-signature",
     DATA = "data",
     BUNDLE = "bundle",
-    DATA_VSO_RESOURCE_INF = "VSO-RESOURCE-INF",
+    // DATA_VSO_RESOURCE_INF = "VSO-RESOURCE-INF",
     DATA_ALLOWEDOPERATIONS = "attribute_allowedOperations",
     DATA_DESCRIPTION = "attribute_description",
     DATA_ID = "attribute_id",
@@ -104,11 +110,11 @@ const serializeFlatCertificate = async (context: any, pkg: t.VroPackageMetadata)
 }
 
 const serializeFlatDunesMetadata = async (context: any, pkg: t.VroPackageMetadata): Promise<void> => {
-    let node = xmlbuilder.create("properties", xmlOptions)
+    const node = xmlbuilder.create("properties", xmlOptions)
     node.dtd("", "http://java.sun.com/dtd/properties.dtd");
     node.ele("comment").text("UTF-16").up()
         // Generates Package ID based on the FQ Package Name
-        .ele("entry").att("key", "pkg-id").text(uuidv5('http://' + getPackageName(pkg), uuidv5.URL)).up()
+        .ele("entry").att("key", "pkg-id").text(v5(`http://${ getPackageName(pkg)}`, v5.URL)).up()
         .ele("entry").att("key", "pkg-name").text([pkg.groupId, pkg.artifactId, pkg.version, pkg.packaging].join(".")).up()
         .ele("entry").att("key", "pkg-description").text(pkg.description || "Built by vRealize Build Tools").up()
         .ele("entry").att("key", "pkg-signer").text(pkg.certificate.subject).up()
@@ -134,7 +140,7 @@ const serializeFlatElements = async (context: any, pkg: t.VroPackageMetadata) =>
 
 
 const serializeFlatElementInfo = async (context: any, pkg: t.VroPackageMetadata, element: t.VroNativeElement): Promise<void> => {
-    let node = xmlbuilder.create("properties", infoOptions)
+    const node = xmlbuilder.create("properties", infoOptions)
     node.dtd("", "http://java.sun.com/dtd/properties.dtd")
     node.ele("comment").text("UTF-16").up()
         .ele("entry").att("key", "type").text(element.type.toString()).up()
@@ -159,7 +165,7 @@ const serializeFlatElementCategory = async (context: any, element: t.VroNativeEl
         const realName = path.replace(/\//g, "");
         categories.ele("category").att("name", realName).ele("name").dat(realName)
     });
-    return context.categories(Buffer.from('\ufeff' + categories.end(), "utf16le").swap16(), { encoding: "utf16le" });
+    return context.categories(Buffer.from(`\ufeff${ categories.end()}`, "utf16le").swap16(), { encoding: "utf16le" });
 }
 
 const serializeFlatElementBundle = async (context: any, element: t.VroNativeElement): Promise<void> => {
@@ -171,7 +177,7 @@ const serializeFlatElementBundle = async (context: any, element: t.VroNativeElem
             + `${element.name}" of type "${element.type}", category "${element.categoryPath}", id: "${element.id}". `
             + `Cannot save script bundle.`);
     }
-    let isDir = isDirectory(element.action.bundle.contentPath);
+    const isDir = isDirectory(element.action.bundle.contentPath);
     return context.bundle(element.action.bundle.contentPath, isDir);
 }
 
@@ -180,7 +186,7 @@ const serializeFlatElementTags = async (context: any, element: t.VroNativeElemen
         winston.loggers.get("vrbt").debug(`Element does not have tags ${element.name}`);
         return;
     }
-    let node = xmlbuilder.create("tags",xmlOptions);
+    const node = xmlbuilder.create("tags",xmlOptions);
     element.tags.forEach(name => {
         node.ele("tag").att("name", name).att("global", true).up()
     })
@@ -194,7 +200,7 @@ const serializeFlatElementContent = async (context: any, element: t.VroNativeEle
     } else {
         content = fs.readFileSync(element.dataFilePath).toString()
     }
-    const contentBuffer = Buffer.from('\ufeff' + content, "utf16le").swap16();
+    const contentBuffer = Buffer.from(`\ufeff${ content}`, "utf16le").swap16();
 
     if (element.type == t.VroElementType.ResourceElement) {
         const data = context.dataComplex;
@@ -209,13 +215,13 @@ const serializeFlatElementContent = async (context: any, element: t.VroNativeEle
         data.allowedOperations(value(DATA_ALLOWEDOPERATIONS));
         data.data(contentBuffer, { encoding: "utf16le" });
         return data.save();
-    } else {
-        return context.data(contentBuffer, { encoding: "utf16le" });
     }
+        return context.data(contentBuffer, { encoding: "utf16le" });
+
 }
 
 const exportPackageElementContentSignature = async (context: any, pkg: t.VroPackageMetadata): Promise<void> => {
-    var data = await fs.readFile(path.join(context.target, DATA));
+    const data = await fs.readFile(path.join(context.target, DATA));
     return context.contentSignature(s.sign(data, pkg.certificate));
 }
 
@@ -223,7 +229,7 @@ const serializeFlatSignatures = async (context: any, pkg: t.VroPackageMetadata):
     const promises = [];
     const target = context.target;
 
-    glob.sync(target + "/**/*", { nodir: true }).forEach(file => {
+    glob.sync(`${target }/**/*`, { nodir: true }).forEach(file => {
         const location = path.normalize(file).replace(target, "");
         const data = s.sign(fs.readFileSync(file), pkg.certificate);
         const signature = context.signatures(location)(data);
@@ -233,19 +239,15 @@ const serializeFlatSignatures = async (context: any, pkg: t.VroPackageMetadata):
 }
 
 const serializeFlat = async (pkg: t.VroPackageMetadata, targetPath: string) => {
-    try {
-        const context = buildContext(targetPath);
-        await Promise.all([
-            serializeFlatCertificate(context, pkg),
-            serializeFlatDunesMetadata(context, pkg),
-            serializeFlatElements(context, pkg),
-        ])
+    const context = buildContext(targetPath);
+    await Promise.all([
+        serializeFlatCertificate(context, pkg),
+        serializeFlatDunesMetadata(context, pkg),
+        serializeFlatElements(context, pkg),
+    ])
 
-        await serializeFlatSignatures(context, pkg);
-        return context.save(getPackageName(pkg));
-    } catch (error) {
-        throw error;
-    }
+    await serializeFlatSignatures(context, pkg);
+    return context.save(getPackageName(pkg));
 }
 
 export { serializeFlat };

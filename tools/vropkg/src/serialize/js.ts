@@ -1,13 +1,16 @@
-import * as Path            from "path";
-import * as FileSystem      from "fs-extra";
-import * as XmlBuilder      from "xmlbuilder2";
-import * as unzipper        from 'unzipper';
-import * as winston         from 'winston';
-import {VroPackageMetadata, VroNativeElement, VroActionData, VroActionParameter, Lang, VroScriptBundle} from "../types";
-import { exist, isDirectory} from "../util";
+/*!
+ * Copyright 2018-2020 VMware, Inc.
+ * SPDX-License-Identifier: MIT
+ */
 import * as path from "path";
 
+import * as FileSystem from "fs-extra";
+import * as XmlBuilder from "xmlbuilder2";
+import * as unzipper from 'unzipper';
+import * as winston from 'winston';
 
+import {Lang, VroActionData, VroActionParameter, VroNativeElement, VroPackageMetadata, VroScriptBundle} from "../types";
+import { exist, isDirectory} from "../util";
 
 const saveOptions = {
     prettyPrint: true
@@ -26,89 +29,88 @@ export class VroJsProjRealizer {
         this.lazy = lazy;
     }
 
-    public static realizeElement(element: VroNativeElement, nativeFolder: string) {
-        let categoryPath : Array<string> = element.categoryPath;
-        let type : string         = element.type || "UnknownType";
-        let id : string           = element.id;
-        let name : string         = element.name;
-        let description: string   = element.description == null ? "" : element.description;
-        let tags : Array<string>  = element.tags;
-        let action: VroActionData = element?.action;
+    static realizeElement(element: VroNativeElement, nativeFolder: string) {
+        const categoryPath : string[] = element.categoryPath;
+        const type : string = element.type || "UnknownType";
+        const id : string = element.id;
+        const name : string = element.name;
+        const description: string = element.description == null ? "" : element.description;
+        const tags : string[] = element.tags;
+        const action: VroActionData = element?.action;
 
         if (type == "ScriptModule") {
-            let dirs : Array<string> = [nativeFolder, "src", "main", "resources"];
-            for (let i = 0; i < categoryPath.length; i++) {
-                let categories = categoryPath[i].split(".");
+            let dirs : string[] = [nativeFolder, "src", "main", "resources"];
+            for (const path of categoryPath) {
+                const categories = path.split(".");
                 dirs = dirs.concat(categories);
             }
-            let basePath = Path.join.apply(null, dirs);
-            VroJsProjRealizer.writeJsFile(nativeFolder, basePath, name + ".js", id, description, tags, action);
+            const basePath = path.join.apply(null, dirs);
+            VroJsProjRealizer.writeJsFile(nativeFolder, basePath, `${name }.js`, id, description, tags, action);
             if (action.bundle != null) {
                 VroJsProjRealizer.writeBundleFile(nativeFolder, basePath, action.bundle);
             }
         } else {
-            let dirs : Array<string> = [nativeFolder, "src", "main", "resources", type].concat(categoryPath);
-            let basePath = Path.join.apply(null, dirs);
+            const dirs : string[] = [nativeFolder, "src", "main", "resources", type].concat(categoryPath);
+            const basePath = path.join.apply(null, dirs);
             VroJsProjRealizer.writeOtherResource(basePath, name, element);
         }
     }
 
-    private static writeJsFile(nativeFolder: string, dir: string, filename : string, id : string, description:string, tags: Array<string>, action : VroActionData) : void {
-        let file = Path.join(dir, filename);
-        let version         : string = action.version;
-        let params: Array<VroActionParameter> = action.params;
-        let returnType: VroActionParameter    = action.returnType;
-        let actionSource    : string = action.inline?.actionSource;
-        let sourceFile      : string = action.inline?.sourceFile;
-        let getActionSource : (action : VroActionData) => string = action.inline?.getActionSource;
-        let javadoc: any             = action.inline?.javadoc;
+    private static writeJsFile(nativeFolder: string, dir: string, filename : string, id : string, description:string, tags: string[], action : VroActionData) : void {
+        const file = path.join(dir, filename);
+        const version : string = action.version;
+        const params: VroActionParameter[] = action.params;
+        const returnType: VroActionParameter = action.returnType;
+        let actionSource : string = action.inline?.actionSource;
+        const sourceFile : string = action.inline?.sourceFile;
+        const getActionSource : (action : VroActionData) => string = action.inline?.getActionSource;
 
         if (actionSource == null && getActionSource != null) {
             try {
                 actionSource = getActionSource(action);
             } catch (e) {
-                throw new Error(`ERROR Cannot read action source for "${file}" from source file "${sourceFile}" : ` + JSON.stringify(e));
+                throw new Error(`ERROR Cannot read action source for "${file}" from source file "${sourceFile}" : ${ JSON.stringify(e)}`);
             }
         }
 
-        var doc : Array<string> = [];
+        let doc : string[] = [];
         doc.push("/**");
-        doc = doc.concat(description.split("\n").map(line=>" * " + line));
+        doc = doc.concat(description.split("\n").map(line=>` * ${ line}`));
         if (action?.runtime?.lang != null && action?.runtime?.lang != Lang.javascript) {
-            doc = doc.concat(" * @runtime " + Lang[action.runtime.lang] + ":" + action.runtime.version);
+            doc = doc.concat(` * @runtime ${ Lang[action.runtime.lang] }:${ action.runtime.version}`);
         }
         let bundleDest : string = VroJsProjRealizer.getScriptBundleDestination(nativeFolder, dir, action.bundle);
-        bundleDest = action.bundle.projectPath != null ? action.bundle.projectPath : Path.relative(nativeFolder, bundleDest);
+        bundleDest = action.bundle.projectPath != null ? action.bundle.projectPath : path.relative(nativeFolder, bundleDest);
         if (action?.bundle != null) {
-            doc = doc.concat(" * @bundle " + bundleDest);
-            doc = doc.concat(" * @entryhandler " + action.bundle.entry);
+            doc = doc.concat(` * @bundle ${ bundleDest}`);
+            doc = doc.concat(` * @entryhandler ${ action.bundle.entry}`);
         }
         doc = doc.concat(params.map(param =>
-            " * @param {" + param.type + "} " + param.name + " "
-            + param.description.trim().split("\n").filter(VroJsProjRealizer.isNotLastAndEmpty).join("\n * ")
+            ` * @param {${ param.type }} ${ param.name } ${
+             param.description.trim().split("\n").filter(VroJsProjRealizer.isNotLastAndEmpty).join("\n * ")}`
         ));
         doc.push(
-            " * @returns {" + returnType.type + "} "
-            + returnType.description.split("\n").filter(VroJsProjRealizer.isNotLastAndEmpty).join("\n * ")
+            ` * @returns {${ returnType.type }} ${
+             returnType.description.split("\n").filter(VroJsProjRealizer.isNotLastAndEmpty).join("\n * ")}`
         );
         if (id != null && id != "") {
-            doc.push(" * @id " + id);
+            doc.push(` * @id ${ id}`);
         }
 
         if (version != null && version != "") {
-            doc.push(" * @version " + version);
+            doc.push(` * @version ${ version}`);
         }
         if (tags != null && tags.length > 0) {
-            doc = doc.concat(tags.map(tag=>" * @tag " + tag));
+            doc = doc.concat(tags.map(tag=>` * @tag ${ tag}`));
         }
         doc.push(" */");
         let docs : string = doc.join("\n");
 
         let iife : string = "(function (";
         for (let index = 0; index < params.length; index++) {
-            let param = params[index];
+            const param = params[index];
             iife += param.name;
-            let isLast = index + 1 >= params.length;
+            const isLast = index + 1 >= params.length;
             if (!isLast) {
                 iife += ", ";
             }
@@ -116,12 +118,12 @@ export class VroJsProjRealizer {
 
         iife += ") {\n";
         if (actionSource != null) {
-            let ident: string = VroJsProjRealizer.getPreferredIdent(actionSource);
+            const ident: string = VroJsProjRealizer.getPreferredIdent(actionSource);
             iife += actionSource.split("\n").filter(VroJsProjRealizer.isNotLastAndEmpty).map(line=>ident + line).join("\n");
         }
         iife += "\n});"
         actionSource = null;
-        let content = docs + "\n" + iife + "\n";
+        const content = `${docs }\n${ iife }\n`;
         docs = null;
         iife = null;
 
@@ -136,7 +138,7 @@ export class VroJsProjRealizer {
         if (!exist(bundle.contentPath)) {
             throw new Error(`Bundle file content not found "${bundle.contentPath}". Cannot copy it under "${bundle.projectPath}".`);
         }
-        let dest : string = VroJsProjRealizer.getScriptBundleDestination(nativeFolder, basePath, bundle);
+        const dest : string = VroJsProjRealizer.getScriptBundleDestination(nativeFolder, basePath, bundle);
         if (exist(dest)) {
             FileSystem.remove(dest);
         }
@@ -145,7 +147,7 @@ export class VroJsProjRealizer {
             FileSystem.copy(bundle.contentPath, dest);
         } else {
             FileSystem.mkdirs(dest);
-            let extractor = unzipper.Extract({ path: dest })
+            const extractor = unzipper.Extract({ path: dest })
             return FileSystem.createReadStream(bundle.contentPath).pipe(extractor).promise().catch(error => {
                 winston.loggers.get("vrbt").info( `Error extracting "${bundle.contentPath}" into "${dest}".` +
                     `Error ${error.message}, file ${error.fileName}, line ${error.lineNumber}`
@@ -155,20 +157,20 @@ export class VroJsProjRealizer {
     }
 
     private static getScriptBundleDestination(nativeFolder:string, basePath:string, bundle:VroScriptBundle) : string {
-        let dest : string = bundle.projectPath == null ? Path.join.apply(null, [path.resolve(basePath), "bundle"]) : bundle.projectPath;
-        if (!Path.isAbsolute(dest)) {
-            dest = Path.resolve(nativeFolder, dest);
+        let dest : string = bundle.projectPath == null ? path.join.apply(null, [path.resolve(basePath), "bundle"]) : bundle.projectPath;
+        if (!path.isAbsolute(dest)) {
+            dest = path.resolve(nativeFolder, dest);
         }
         return dest;
     }
 
-    private static isNotLastAndEmpty(line : string, index : number, arr : Array<string>) {
+    private static isNotLastAndEmpty(line : string, index : number, arr : string[]) {
         return line != "" || index != arr.length-1;
     }
 
     private static getPreferredIdent(source : string) : string {
-        let lines: Array<string> = source.split("\n");
-        let score = lines.reduce((sum,line) =>  sum + VroJsProjRealizer.getIndent(line),0);
+        const lines: string[] = source.split("\n");
+        const score = lines.reduce((sum,line) => sum + VroJsProjRealizer.getIndent(line),0);
         return score >= 0 ? "    " : "\t";
     }
 
@@ -179,7 +181,7 @@ export class VroJsProjRealizer {
         let tabs : number = 0;
         let spaces : number = 0;
         for (let index : number =0; index < line.length; index++) {
-            let chr : string = line.charAt(index);
+            const chr : string = line.charAt(index);
             if (chr == "\t") {
                 tabs++;
             } else if (chr == " ") {
@@ -199,17 +201,17 @@ export class VroJsProjRealizer {
 
     private static writeOtherResource(basePath : string, name : string, element:VroNativeElement) : void {
 
-        let elementXmlPath     = Path.join(basePath, name + ".xml");
-        let elementInfoXmlPath = Path.join(basePath, name + ".element_info.xml");
-        let elementTagsPath    = Path.join(basePath, name + ".tags.xml");
+        const elementXmlPath = path.join(basePath, `${name }.xml`);
+        const elementInfoXmlPath = path.join(basePath, `${name }.element_info.xml`);
+        const elementTagsPath = path.join(basePath, `${name }.tags.xml`);
         FileSystem.mkdirsSync(basePath);
 
         // Content
         FileSystem.copyFile(element.dataFilePath, elementXmlPath);
 
         // Meta Info.
-        let comment : string = "Created by VMware Professional Services Center of Excellence (PSCoE) Toolchain";
-        let elementInfoXml = XmlBuilder.create(xmlOptions).ele("properties");
+        const comment : string = "Created by VMware Professional Services Center of Excellence (PSCoE) Toolchain";
+        const elementInfoXml = XmlBuilder.create(xmlOptions).ele("properties");
         elementInfoXml.dtd({ pubID: "", sysID: "http://java.sun.com/dtd/properties.dtd"})
         elementInfoXml.ele("comment").dat(comment);
 
@@ -219,20 +221,20 @@ export class VroJsProjRealizer {
 
         elementInfoXml
             .ele("entry").att("key", "categoryPath").txt(element.categoryPath.join(".")).up()
-            .ele("entry").att("key", "name"        ).txt(element.name                  ).up()
-            .ele("entry").att("key", "type"        ).txt(element.type                  ).up()
-            .ele("entry").att("key", "id"          ).txt(element.id                    ).up()
-            .ele("entry").att("key", "description" ).txt(element.description           ).up();
-        FileSystem.writeFile(elementInfoXmlPath,  elementInfoXml.end(saveOptions));
+            .ele("entry").att("key", "name" ).txt(element.name ).up()
+            .ele("entry").att("key", "type" ).txt(element.type ).up()
+            .ele("entry").att("key", "id" ).txt(element.id ).up()
+            .ele("entry").att("key", "description" ).txt(element.description ).up();
+        FileSystem.writeFile(elementInfoXmlPath, elementInfoXml.end(saveOptions));
 
         // Tags
-        let elementTagsXml = XmlBuilder.create({version: "1.0", encoding: "UTF-8"}).ele("tags");
-        let tags = element?.tags || [];
-        for (let index in tags) { elementTagsXml.ele("tag").att("name", tags[index]).att("global", "true").up(); }
-        FileSystem.writeFile(elementTagsPath,     elementTagsXml.end(saveOptions));
+        const elementTagsXml = XmlBuilder.create({version: "1.0", encoding: "UTF-8"}).ele("tags");
+        const tags = element?.tags || [];
+        for (const index in tags) { elementTagsXml.ele("tag").att("name", tags[index]).att("global", "true").up(); }
+        FileSystem.writeFile(elementTagsPath, elementTagsXml.end(saveOptions));
     }
 
-    public async realize(pkg: VroPackageMetadata, nativeFolder: string) : Promise<void>{
+    async realize(pkg: VroPackageMetadata, nativeFolder: string) : Promise<void>{
         this.realizePom(pkg, nativeFolder);
         pkg.elements.forEach(element => {
             VroJsProjRealizer.realizeElement(element, nativeFolder);
@@ -242,19 +244,19 @@ export class VroJsProjRealizer {
 
     private realizePom(pkg: VroPackageMetadata, nativeFolder: string) {
 
-        let node = XmlBuilder.create(xmlOptions).ele("project");
+        const node = XmlBuilder.create(xmlOptions).ele("project");
         node.att("xmlns", "http://maven.apache.org/POM/4.0.0")
         node.att("xmlns:xsi", "http://www.w3.org/2001/XMLSchema-instance")
         node.att("xsi:schemaLocation", "http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd")
 
         node
-            .ele("modelVersion") .txt("4.0.0"       ) .up()
-            .ele("groupId"     ) .txt(pkg.groupId   ) .up()
-            .ele("artifactId"  ) .txt(pkg.artifactId) .up()
-            .ele("version"     ) .txt(pkg.version   ) .up()
-            .ele("packaging"   ) .txt(pkg.packaging ) .up()
+            .ele("modelVersion") .txt("4.0.0" ) .up()
+            .ele("groupId" ) .txt(pkg.groupId ) .up()
+            .ele("artifactId" ) .txt(pkg.artifactId) .up()
+            .ele("version" ) .txt(pkg.version ) .up()
+            .ele("packaging" ) .txt(pkg.packaging ) .up()
 
         FileSystem.mkdirsSync(nativeFolder)
-        return FileSystem.writeFile(Path.join(nativeFolder, "pom.xml"), node.end(saveOptions))
+        return FileSystem.writeFile(path.join(nativeFolder, "pom.xml"), node.end(saveOptions))
     }
 }

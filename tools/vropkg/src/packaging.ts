@@ -1,3 +1,7 @@
+/*!
+ * Copyright 2018-2020 VMware, Inc.
+ * SPDX-License-Identifier: MIT
+ */
 import * as fs from "fs-extra";
 import * as archiver from 'archiver';
 import * as unzipper from 'unzipper';
@@ -18,7 +22,7 @@ import * as winston from 'winston';
 export const archive = (outputPath: string): archiver.Archiver => {
 
 	// TODO - figureout ZIP level that vRO is using, as md5 is different on the same content
-	let instance =
+	const instance =
 		archiver.create('zip', { zlib: { level: 9 } })
 			.on('warning', (err) => {
 				if (err.code === 'ENOENT') {
@@ -27,7 +31,7 @@ export const archive = (outputPath: string): archiver.Archiver => {
 					throw err;
 				}
 			})
-			.on('error', function (err) {
+			.on('error', (err) => {
 				throw err;
 			})
 
@@ -43,7 +47,7 @@ export const archive = (outputPath: string): archiver.Archiver => {
  * @param destinationDir folder under which the package content will be extracted
  */
 export const extract = async (assemblyFilePath: string, destinationDir): Promise<void> => {
-	let extractor = unzipper.Extract({ path: destinationDir })
+	const extractor = unzipper.Extract({ path: destinationDir })
 	return fs.createReadStream(assemblyFilePath).pipe(extractor).promise().catch(error => {
 		winston.loggers.get("vrbt").info(
 			`Error extracting ${assemblyFilePath} into ${destinationDir}.` +

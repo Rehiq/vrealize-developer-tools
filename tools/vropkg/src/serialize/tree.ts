@@ -1,9 +1,15 @@
-import * as fs from "fs-extra";
+/*!
+ * Copyright 2018-2020 VMware, Inc.
+ * SPDX-License-Identifier: MIT
+ */
 import * as path from "path";
-import * as archiver from 'archiver';
-import * as t from "../types";
+
+import * as fs from "fs-extra";
+import archiver from 'archiver';
 import * as xmlbuilder from "xmlbuilder";
-import { saveOptions, serialize, xmlOptions, complexActionComment, getActionXml} from "./util"
+
+import * as t from "../types";
+import { complexActionComment, getActionXml, saveOptions, serialize, xmlOptions} from "./util"
 import { exist, isDirectory} from "../util";
 
 const buildContext = (target: string) => {
@@ -28,25 +34,25 @@ const serializeTreeElementContext = (target: string, elementName: string) => {
             if(type == t.VroElementType.ResourceElement){
                 return fs.copyFile(sourceFile, path.join(target, `${elementName}`))
             } else if (type == t.VroElementType.ScriptModule) {
-                let elementXmlPath = path.join(target, `${elementName}.xml`)
-                let actionXml = getActionXml(element.id, element.name, element.description, element.action);
+                const elementXmlPath = path.join(target, `${elementName}.xml`)
+                const actionXml = getActionXml(element.id, element.name, element.description, element.action);
                 return fs.writeFile(elementXmlPath, actionXml);
             }
             return fs.copyFile(sourceFile, path.join(target, `${elementName}.xml`));
         },
         bundle: (element: t.VroNativeElement, bundle: t.VroScriptBundle) => {
             if (bundle == null) {
-                return new Promise<void>((resolve, reject) => {}); // Empty promise that does nothing. Nothing needs to be done since bundle file does not exist.
+                return Promise.resolve(); // Empty promise that does nothing. Nothing needs to be done since bundle file does not exist.
             }
-            let bundleFilePathSrc = bundle.contentPath;
+            const bundleFilePathSrc = bundle.contentPath;
             if (!exist(bundleFilePathSrc)) {
                 throw new Error(`Bundle path "${bundleFilePathSrc}" does not exist. Cannot get script bundle for element `
                     + `"${element.name}" of type "${element.type}"; category "${element.categoryPath}"; id: "${element.id}"`);
             }
-            let bundleFilePathDest = path.join(target, `${elementName}.bundle.zip`);
+            const bundleFilePathDest = path.join(target, `${elementName}.bundle.zip`);
             if (isDirectory(bundleFilePathSrc)) {
-                var output = fs.createWriteStream(bundleFilePathDest);
-                var archive = archiver('zip', { zlib: { level: 9 } });
+                const output = fs.createWriteStream(bundleFilePathDest);
+                const archive = archiver('zip', { zlib: { level: 9 } });
                 archive.directory(bundleFilePathSrc, false);
                 archive.pipe(output);
                 archive.finalize();
@@ -73,7 +79,7 @@ const serializeTreePom = (context: any, pkg: t.VroPackageMetadata) => {
             .attribute("xsi:schemaLocation", "http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd")
             .ele("modelVersion").text("4.0.0").up()
             .ele("groupId").text(pkg.groupId).up()
-            .ele("artifactId").text(pkg.artifactId + "test").up()
+            .ele("artifactId").text(`${pkg.artifactId }test`).up()
             .ele("version").text(pkg.version).up()
             .ele("packaging").text(pkg.packaging).up()
             .end(saveOptions)
@@ -91,9 +97,9 @@ const serializeTreeElement = async (context: any, element: t.VroNativeElement): 
     const categoryPathKay = element.type == t.VroElementType.ScriptModule
         ? element.categoryPath
         : element.categoryPath.map(c => c.replace(/\./g, "/."))
-    let pathKey : string = categoryPathKay.join(".");
+    const pathKey : string = categoryPathKay.join(".");
 
-    const categoryPath    = element.type == t.VroElementType.ScriptModule
+    const categoryPath = element.type == t.VroElementType.ScriptModule
         ? element.categoryPath.pop().split('.')
         : element.categoryPath;
 

@@ -101,7 +101,7 @@ jobs:
       - name: vropkg install and build
         run: |
           cd /tools/vropkg
-          npm install
+          yarn install
           cd ../../
         env:
           CI: true

@@ -1,28 +1,33 @@
-import * as glob from "glob";
+/*!
+ * Copyright 2018-2020 VMware, Inc.
+ * SPDX-License-Identifier: MIT
+ */
 import * as path from "path";
-import * as winston from 'winston';
+
+import * as glob from "glob";
+
 import * as t from "../types";
-import { read, stringToCategory, xml, xmlGet, xmlToAction, xmlChildNamed, xmlToTag } from "./util";
+import { read, stringToCategory, xml, xmlChildNamed, xmlGet, xmlToAction, xmlToTag } from "./util";
 import { exist} from "../util";
 
 
 function parseTreeElement(elementInfoPath: string): t.VroNativeElement {
-    let info = xml(read(elementInfoPath));
+    const info = xml(read(elementInfoPath));
 
-    let categoryPath = stringToCategory(xmlGet(info, "categoryPath"));
-    let id = xmlGet(info, "id");
-    let type = t.VroElementType[xmlGet(info, "type")];
+    const categoryPath = stringToCategory(xmlGet(info, "categoryPath"));
+    const id = xmlGet(info, "id");
+    const type = t.VroElementType[xmlGet(info, "type")];
     let name = xmlGet(info, "name");
     let attributes = {};
     let dataFilePath = elementInfoPath.replace(".element_info.xml", ".xml");
-    let bundleFilePath = elementInfoPath.replace(".element_info.xml", ".bundle.zip");
-    let elementTagPath = elementInfoPath.replace(".element_info.xml", ".tags.xml");
-    let elementInputFormPath = elementInfoPath.replace(".element_info.xml", ".form.json");
-    let infoXml = xml(read(elementInfoPath));
-    let description  = xmlGet(infoXml, "description");
-    let comment = xmlChildNamed(infoXml, "comment");
+    const bundleFilePath = elementInfoPath.replace(".element_info.xml", ".bundle.zip");
+    const elementTagPath = elementInfoPath.replace(".element_info.xml", ".tags.xml");
+    const elementInputFormPath = elementInfoPath.replace(".element_info.xml", ".form.json");
+    const infoXml = xml(read(elementInfoPath));
+    const description = xmlGet(infoXml, "description");
+    const comment = xmlChildNamed(infoXml, "comment");
     let form = null;
-    let tags : Array<string>= [];
+    let tags : string[]= [];
     let action : t.VroActionData = null;
 
     // Tags are optional
@@ -40,42 +45,41 @@ function parseTreeElement(elementInfoPath: string): t.VroNativeElement {
     }
 
     if (type == t.VroElementType.ResourceElement) {
-        attributes = <t.VroNativeResourceElementAttributes>{
+        attributes = {
             id: xmlGet(info, "id"),
             name: xmlGet(info, "name"),
             version: xmlGet(info, "version") || "0.0.0",
             mimetype: xmlGet(info, "mimetype"),
             description: xmlGet(info, "description") || "",
             allowedOperations: "vf" // There is no information in NativeFolder. Using defaults
-        }
+        } as t.VroNativeResourceElementAttributes;
         dataFilePath = dataFilePath.replace(".xml", "");
     } else if (type == t.VroElementType.ScriptModule) {
         name = xml(read(dataFilePath)).attr.name;
         action = xmlToAction(dataFilePath, bundleFilePath, name, comment, description, tags);
     }
 
-    return <t.VroNativeElement>{ categoryPath, type, id, name, description, attributes, dataFilePath, tags, action, form };
+    return { categoryPath, type, id, name, description, attributes, dataFilePath, tags, action, form } as t.VroNativeElement;
 }
 
 
 async function parseTree(nativeFolderPath: string): Promise<t.VroPackageMetadata> {
 
-    let pomXml = xml(read(path.join(nativeFolderPath, "pom.xml")))
+    const pomXml = xml(read(path.join(nativeFolderPath, "pom.xml")))
 
-    let elements = glob
+    const elements = glob
         .sync(path.join(nativeFolderPath, "**", "*.element_info.xml"))
         .map(file => parseTreeElement(file)
         );
 
-    let result = <t.VroPackageMetadata>{
+    return {
         groupId: pomXml.descendantWithPath("groupId").val,
         artifactId: pomXml.descendantWithPath("artifactId").val,
         version: pomXml.descendantWithPath("version").val,
         packaging: pomXml.descendantWithPath("packaging").val,
         description: pomXml.descendantWithPath("description")?.val || "",
         elements: elements
-    }
-    return result;
+    } as t.VroPackageMetadata;;
 }
 
 export { parseTree };
