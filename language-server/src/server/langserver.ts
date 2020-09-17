@@ -1,5 +1,3 @@
-#!/usr/bin/env node // eslint-disable-line
-
 /*!
  * Copyright 2018-2020 VMware, Inc.
  * SPDX-License-Identifier: MIT
