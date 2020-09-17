@@ -12,7 +12,9 @@ jobs:
         with:
           node-version: "12.14.1"
           registry-url: "https://npm.pkg.github.com"
-      - run: yarn install
-      - run: yarn publish --access public
+      - run: |
+          cd tools/vropkg
+          yarn install
+          yarn publish --access public
         env:
           NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
