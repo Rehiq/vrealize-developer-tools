@@ -1,0 +1,11 @@
+.o11n/
+.vscode/
+.settings/
+node_modules/
+/built
+/lib/
+/e2e/out/
+**/.DS_Store
+**/*.tgz
+package-lock.json
+yarn.lock

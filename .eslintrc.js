@@ -31,6 +31,9 @@ module.exports = {
         "@typescript-eslint/no-object-literal-type-assertion": "off",
         "@typescript-eslint/no-unused-vars": ["warn", { args: "none" }],
         "@typescript-eslint/explicit-function-return-type": "off",
+        "@typescript-eslint/no-namespace": "off",
+        "@typescript-eslint/consistent-type-assertions": "off",
+        "@typescript-eslint/no-var-requires": "off",
         "@typescript-eslint/explicit-member-accessibility": [
             "error",
             {
