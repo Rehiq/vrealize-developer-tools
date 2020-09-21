@@ -77,7 +77,7 @@ export class HintLookup implements Disposable {
         const module = this.getActionModules(workspaceFolder).find(module => module.name === moduleName)
 
         if (module && module.actions) {
-            return module.actions.filter(action => !!action)
+            return module.actions.filter((action: any) => !!action)
         }
 
         return []
@@ -99,7 +99,7 @@ export class HintLookup implements Disposable {
         const module = this.getConfigCategories(workspaceFolder).find(category => category.path === categoryPath)
 
         if (module && module.configurations) {
-            return module.configurations.filter(config => !!config)
+            return module.configurations.filter((config: any) => !!config)
         }
 
         return []

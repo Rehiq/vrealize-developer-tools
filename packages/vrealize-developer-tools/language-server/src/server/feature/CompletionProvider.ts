@@ -198,8 +198,8 @@ export class CompletionProvider {
 
         if (cls.methods && cls.methods.length > 0) {
             cls.methods
-                .filter(method => !!method.name && method.name.startsWith(prefix.filter || ""))
-                .forEach(method => {
+                .filter((method: any) => !!method.name && method.name.startsWith(prefix.filter || ""))
+                .forEach((method: any) => {
                     const name = method.name || ""
                     const completionItem = CompletionItem.create(name)
                     completionItem.kind = CompletionItemKind.Method
@@ -215,8 +215,8 @@ export class CompletionProvider {
 
         if (cls.properties && cls.properties.length > 0) {
             cls.properties
-                .filter(prop => !!prop.name && prop.name.startsWith(prefix.filter || ""))
-                .forEach(prop => {
+                .filter((prop: any) => !!prop.name && prop.name.startsWith(prefix.filter || ""))
+                .forEach((prop: any) => {
                     const name = prop.name || ""
                     const completionItem = CompletionItem.create(name)
                     completionItem.kind = CompletionItemKind.Variable

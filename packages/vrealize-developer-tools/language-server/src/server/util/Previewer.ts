@@ -34,7 +34,7 @@ export default class Previewer {
         result += ` ${name}(`
 
         if (action.parameters) {
-            action.parameters.forEach((param, i, list) => {
+            action.parameters.forEach((param: any, i: any, list: any) => {
                 result += `\n　　${param.name}: ${Previewer.normalizeType(param.type)}`
                 result += i < list.length - 1 ? ", " : "\n"
             })
@@ -50,7 +50,7 @@ export default class Previewer {
         let result = `function ${name}(`
 
         if (method.parameters) {
-            method.parameters.forEach((param, i, list) => {
+            method.parameters.forEach((param: any, i: any, list: any) => {
                 result += `\n　　${param.name}: ${Previewer.normalizeType(param.type)}`
                 result += i < list.length - 1 ? ", " : "\n"
             })
@@ -74,7 +74,7 @@ export default class Previewer {
         let result = `class ${name}(`
 
         if (constr.parameters) {
-            constr.parameters.forEach((param, i, list) => {
+            constr.parameters.forEach((param: any, i: any, list: any) => {
                 result += `\n　　${param.name}: ${Previewer.normalizeType(param.type)}`
                 result += i < list.length - 1 ? ", " : "\n"
             })

@@ -3,7 +3,7 @@
   "version": "2.2.0",
   "description": "Used to build vRealize Orchestrator signed package out of it source code (expand to package XML)",
   "author": "VMware PSCoE",
-  "license": "VMware Confidential",
+  "license": "MIT",
   "private": false,
   "keywords": [
     "vRealize Orchestrator",
