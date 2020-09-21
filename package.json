@@ -1,0 +1,44 @@
+{
+  "name": "vmware-pscoe",
+  "publisher": "vmware-pscoe",
+  "version": "2.8.7-SNAPSHOT",
+  "description": "> A [Visual Studio Code](https://code.visualstudio.com/) extension that provides code intelligence features and enables a more > developer-friendly experience when creating [vRealize Orchestrator](https://www.vmware.com/products/vrealize-orchestrator.html) > and [vRealize Automation](https://www.vmware.com/products/vrealize-automation.html) content.",
+  "dependencies": {},
+  "devDependencies": {
+    "lerna": "^3.22.1"
+  },
+  "scripts": {},
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/vmware/vrealize-developer-tools.git"
+  },
+  "author": "",
+  "license": "MIT",
+  "private": true,
+  "bugs": {
+    "url": "https://github.com/vmware/vrealize-developer-tools/issues"
+  },
+  "homepage": "https://github.com/vmware/vrealize-developer-tools#readme",
+  "workspaces": {
+    "packages": [
+      "packages/*"
+    ],
+    "nohoist": [
+      "**/@types/gulp-jasmine",
+      "**/@types/jest",
+      "**/@types/jasmine"
+    ]
+  },
+  "engines": {
+    "node": ">=12.14.1",
+    "vscode": "^1.40.0"
+  },
+  "categories": [
+    "Programming Languages"
+  ],
+  "keywords": [
+    "vRealize",
+    "vRO",
+    "vRA"
+  ]
+}
