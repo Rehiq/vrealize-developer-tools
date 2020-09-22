@@ -109,8 +109,8 @@ describe("End-to-End Tests", () => {
                 '--out', 'flat',
                 '--srcPath', expand('test', 'com.vmware.pscoe.toolchain-expand'),
                 '--destPath', expand('test', 'target-flat'),
-                '--privateKeyPEM', fs.readFileSync(expand('test', 'private_key.pem')).toString(),
-                '--certificatesPEM', fs.readFileSync(expand('test', 'cert.pem')).toString(),
+                '--privateKeyPEM', `"${fs.readFileSync(expand('test', 'private_key.pem'))}"`,
+                '--certificatesPEM', `"${fs.readFileSync(expand('test', 'cert.pem'))}"`,
             ]);
             await unzipFlat();
         } catch (error) {
@@ -130,8 +130,8 @@ describe("End-to-End Tests", () => {
                 '--out', 'tree',
                 '--srcPath', expand('test', 'com.vmware.pscoe.toolchain.package'),
                 '--destPath', expand('test', 'target-tree'),
-                '--privateKeyPEM', fs.readFileSync(expand('test', 'private_key.pem')).toString(),
-                '--certificatesPEM', fs.readFileSync(expand('test', 'cert.pem')).toString(),
+                '--privateKeyPEM', `"${fs.readFileSync(expand('test', 'private_key.pem'))}"`,
+                '--certificatesPEM', `"${fs.readFileSync(expand('test', 'cert.pem'))}"`,
             ]);
         } catch (error) {
             throw error;
