@@ -1,5 +1,4 @@
 {
-  "private": true,
   "name": "vrealize-developer-tools",
   "displayName": "vRealize Developer Tools",
   "description": "Provides code intelligence features and enables a more developer-friendly experience when creating VMware vRealize Orchestrator and VMware vRealize Automation content.",
