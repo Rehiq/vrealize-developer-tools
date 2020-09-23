@@ -12,7 +12,7 @@ import * as unzipper from 'unzipper';
 
 
 describe("End-to-End Tests", () => {
-    jasmine.DEFAULT_TIMEOUT_INTERVAL = 30000;
+    jasmine.DEFAULT_TIMEOUT_INTERVAL = 50 * 1000; // 30 seconds
 
     const childProcLogs = process.env.CHILD_PROC_LOGS == "true" || process.env.CHILD_PROC_LOGS == "1";
 
