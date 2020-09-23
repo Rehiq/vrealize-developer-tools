@@ -7,5 +7,3 @@ node_modules/
 /e2e/out/
 **/.DS_Store
 **/*.tgz
-package-lock.json
-yarn.lock
